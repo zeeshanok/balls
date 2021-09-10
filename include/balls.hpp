@@ -107,7 +107,7 @@ class CollidingWorld {
     void removeBall(int id);
 
     bool checkBallCollision(Vec2<int> cell, int id1, int id2);
-    void resolveCollisions(void);
+    void resolveCollisions(Vec2<int> cell);
 
     bool isValidCell(Vec2<int> cell);
     void buildCells(void);

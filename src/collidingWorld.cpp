@@ -71,12 +71,13 @@ bool CollidingWorld::checkBallCollision(Vec2<int> cell_pos, int id1, int id2) {
     return false;
 }
 
-void CollidingWorld::resolveCollisions(void) {
-    for (auto &[_, cell] : cells) {
+void CollidingWorld::resolveCollisions(Vec2<int> pos) {
+    if (isValidCell(pos)) {
+        auto cell = cells[pos];
         for (auto &x : cell) {
             for (auto &y : cell) {
                 if (x->id != y->id && x->isCollidingWith(*y)) {
-                    // std::cout << "collision between ball" << x->id << " and " << y->id << "\n";
+                    std::cout << "collision between ball " << x->id << " and " << y->id << "\n";
                 }
             }
         }
@@ -112,27 +113,46 @@ void CollidingWorld::update(bool checkCollision) {
 
     std::unordered_set<int> updated = {};
 
-    for (auto &[_, vec] : this->cells) {
-        for (auto &x : vec) {
+    for (auto &[pos, cell] : this->cells) {
+        for (auto &x : cell) {
             if (x->id == selectedBall) {
                 x->pos = GetMousePosition();
-            } else if (shouldUpdate) {
+            } else if (shouldUpdate && updated.find(x->id) == updated.end()) {
                 // update only if ball hasnt been updated in another cell before
-                if (updated.find(x->id) == updated.end()) {
-                    x->update();
-                    if (x->pos.x >= worldConstraint.x - x->radius || x->pos.x - x->radius < 0) {
-                        x->vel.x = -x->vel.x;
-                        x->acc.x = -x->acc.x;
-                    }
-                    if (x->pos.y >= worldConstraint.y - x->radius || x->pos.y - x->radius < 0) {
-                        x->vel.y = -x->vel.y;
-                        x->acc.y = -x->acc.y;
-                    }
+                x->update();
+
+                Vec2<bool> outbound = {x->pos.x >= worldConstraint.x - x->radius,
+                                       x->pos.y >= worldConstraint.y - x->radius};
+                Vec2<bool> inbound = {x->pos.x - x->radius < 0, x->pos.y - x->radius < 0};
+
+                const auto xfunc = [x]() {
+                    x->vel.x = -x->vel.x;
+                    x->acc.x = -x->acc.x;
+                };
+                const auto yfunc = [x]() {
+                    x->vel.y = -x->vel.y;
+                    x->acc.y = -x->acc.y;
+                };
+
+                if (outbound.x) {
+                    x->pos.x = worldConstraint.x - x->radius;
+                    xfunc();
+                } else if (inbound.x) {
+                    x->pos.x = x->radius;
+                    xfunc();
                 }
-                if (checkCollision) resolveCollisions();
+
+                if (outbound.y) {
+                    x->pos.y = worldConstraint.y - x->radius;
+                    yfunc();
+                } else if (inbound.y) {
+                    x->pos.y = x->radius;
+                    yfunc();
+                }
                 updated.insert(x->id);
             }
         }
+        if (checkCollision) resolveCollisions(pos);
     }
 }
 
