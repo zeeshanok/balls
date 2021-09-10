@@ -152,7 +152,7 @@ void CollidingWorld::update(bool checkCollision) {
                 updated.insert(x->id);
             }
         }
-        if (checkCollision) resolveCollisions(pos);
+        if (checkCollision && shouldUpdate) resolveCollisions(pos);
     }
 }
 
