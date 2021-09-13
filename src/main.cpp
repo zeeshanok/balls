@@ -55,8 +55,10 @@ int main(void) {
         ClearBackground(BLACK);
 
         world.draw();
-        DrawText((std::to_string(GetFPS()) + (world.isUpdating() ? "" : "  Paused")).c_str(), 0, 0, 20,
-                 WHITE);
+        DrawText((std::to_string(GetFPS()) + (world.isUpdating() ? "" : "  Paused") +
+                  "\nBalls: " + std::to_string(world.getBallCount()))
+                     .c_str(),
+                 0, 0, 20, WHITE);
 
         EndDrawing();
     }

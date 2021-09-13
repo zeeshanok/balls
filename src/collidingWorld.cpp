@@ -22,6 +22,10 @@ int CollidingWorld::getLastBallId(void) const {
     return lastId;
 }
 
+int CollidingWorld::getBallCount(void) const {
+    return balls.size();
+}
+
 std::vector<Vec2<int>> CollidingWorld::getRelatedCoords(Vec2<int> pos) {
     std::vector<Vec2<int>> possible = {pos,
                                        {pos.x - 1, pos.y - 1},

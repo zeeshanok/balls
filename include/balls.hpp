@@ -113,6 +113,7 @@ class CollidingWorld {
     std::vector<Vec2<int>> getRelatedCoords(Vec2<int> pos);
 
     int getLastBallId(void) const;
+    int getBallCount(void) const;
 
     void draw(void);
 };
