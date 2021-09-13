@@ -8,17 +8,23 @@
 int main(void) {
     srand(time(NULL));
     const int screenHeight = 900, screenWidth = 900;
-    CollidingWorld world(90, Vec2<int>{screenWidth, screenHeight});
+    const int balls = 2;
+    CollidingWorld world(150, Vec2<int>{screenWidth, screenHeight});
 
     Color colors[] = {BLUE, RED, GREEN, YELLOW};
 
-    for (size_t i = 0; i < 20; i++) {
+    const auto randBall = [colors](int id) {
         Vector2 pos = {rand() % screenWidth, rand() % screenHeight};
-        Vector2 vel = {200 + (rand() % 40), 200 + (rand() % 40)};
-        auto acc = Vec2<float> {1, 0};
+        Vector2 vel = {10 + (rand() % 40), 10 + (rand() % 40)};
+        // auto vel = Vector2Zero();
+        auto acc = Vector2Zero();
         auto color = colors[rand() % 4];
-        auto radius = 20 + (rand() % 40);
-        world.addBall(Ball(i, radius, radius, color, pos, vel, acc));
+        auto radius = 40 + (rand() % 20);
+        return Ball(id, radius, radius, color, pos, vel, acc);
+    };
+
+    for (size_t i = 0; i < balls; i++) {
+        world.addBall(randBall(i));
     }
 
     InitWindow(screenWidth, screenHeight, "balls");
@@ -26,18 +32,6 @@ int main(void) {
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-        // for (auto &ball : balls) {
-        //     ball.update();
-        //     if (ball.pos.x >= screenWidth || ball.pos.x < 0) {
-        //         ball.vel.x = -ball.vel.x;
-        //         ball.acc.x = -ball.acc.x;
-        //     }
-        //     if (ball.pos.y >= screenHeight || ball.pos.y < 0) {
-        //         ball.vel.y = -ball.vel.y;
-        //         ball.acc.y = -ball.acc.y;
-        //     }
-        // }
-
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
             world.setSelected(GetMousePosition());
         }
@@ -46,6 +40,12 @@ int main(void) {
         }
         if (IsKeyPressed(KEY_SPACE)) {
             world.toggleUpdate();
+        }
+        if (IsKeyPressed(KEY_A)) {
+            world.addBall(randBall(world.getLastBallId() + 1));
+        }
+        if (IsKeyPressed(KEY_D)) {
+            world.removeBall(world.getLastBallId());
         }
 
         world.update(true);

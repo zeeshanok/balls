@@ -16,28 +16,17 @@
 
 #include "raymath.h"
 
-// struct IntVec2 {
-//     int x;
-//     int y;
-//     bool operator==(const IntVec2& i) const { return x == i.x && y == i.x; }
-// };
-
-// namespace std {
-// template <>
-// struct hash<IntVec2> {
-//     std::size_t operator()(IntVec2 const& v) const noexcept {
-//         auto h1 = std::hash<int>{}(v.x);
-//         auto h2 = std::hash<int>{}(v.y);
-//         h1 ^= h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2);
-//         return h1;
-//     }
-// };
-// }  // namespace std
 template <typename T>
 struct Vec2 {
     T x;
     T y;
     bool operator==(Vec2<T> const& i) const { return x == i.x && y == i.y; }
+};
+
+template <>
+struct Vec2<float> {
+    float x;
+    float y;
     operator Vector2() const { return {(float)x, (float)y}; }
 };
 
@@ -97,6 +86,7 @@ class CollidingWorld {
     int cellSize;
     Vec2<int> worldConstraint;
     bool shouldUpdate;
+    int lastId;
 
     Vec2<int> hash(Vector2 position) const;
 
@@ -119,6 +109,10 @@ class CollidingWorld {
     void update(void);
     void toggleUpdate(void);
     bool isUpdating(void) const;
+
+    std::vector<Vec2<int>> getRelatedCoords(Vec2<int> pos);
+
+    int getLastBallId(void) const;
 
     void draw(void);
 };
