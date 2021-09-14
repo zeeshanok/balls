@@ -7,7 +7,8 @@
 
 #include "balls.hpp"
 
-CollidingWorld::CollidingWorld(int c, Vec2<int> constr) : cellSize(c), selectedBall(-1), shouldUpdate(true), lastId(-1) {
+CollidingWorld::CollidingWorld(int c, Vec2<int> constr)
+    : cellSize(c), selectedBall(-1), shouldUpdate(true), lastId(-1) {
     worldConstraint = constr;
     auto [wx, wy] = worldConstraint;
     for (int i = 0; i < wx / cellSize; i++) {
@@ -18,13 +19,9 @@ CollidingWorld::CollidingWorld(int c, Vec2<int> constr) : cellSize(c), selectedB
     }
 }
 
-int CollidingWorld::getLastBallId(void) const {
-    return lastId;
-}
+int CollidingWorld::getLastBallId(void) const { return lastId; }
 
-int CollidingWorld::getBallCount(void) const {
-    return balls.size();
-}
+int CollidingWorld::getBallCount(void) const { return balls.size(); }
 
 std::vector<Vec2<int>> CollidingWorld::getRelatedCoords(Vec2<int> pos) {
     std::vector<Vec2<int>> possible = {pos,
@@ -57,22 +54,24 @@ void CollidingWorld::buildCells(void) {
     for (auto &[_, vec] : this->cells) {
         vec.clear();
     }
+    std::cout << "balls: " << balls.size() << "\n";
+    if (balls.size() != 0) {
+        for (size_t i = 0; i < balls.size(); i++) {
+            auto hash_pos = hash(balls[i].pos);
+            auto [a, b, c, d] = balls[i].getBounds();
+            std::unordered_set<Vec2<int>> coords = {hash_pos, hash(a), hash(b), hash(c), hash(d)};
+            bool added = false;
 
-    for (size_t i = 0; i < balls.size(); i++) {
-        auto hash_pos = hash(balls[i].pos);
-        auto [a, b, c, d] = balls[i].getBounds();
-        std::unordered_set<Vec2<int>> coords = {hash_pos, hash(a), hash(b), hash(c), hash(d)};
-        bool added = false;
-
-        // we want to add the ball to every cell that it touches
-        for (auto &coord : coords) {
-            if (isValidCell(hash_pos)) {
-                cells[hash_pos].push_back(&this->balls[i]);
-                added = true;
+            // we want to add the ball to every cell that it touches
+            for (auto &coord : coords) {
+                if (isValidCell(hash_pos)) {
+                    cells[hash_pos].push_back(&this->balls[i]);
+                    added = true;
+                }
             }
-        }
-        if (!added) {
-            std::cerr << "could not find cell for " << hash_pos.x << "," << hash_pos.y << "\n";
+            if (!added) {
+                // std::cerr << "could not find cell for " << hash_pos.x << "," << hash_pos.y << "\n";
+            }
         }
     }
 }
@@ -133,10 +132,11 @@ void CollidingWorld::addBall(Ball ball) {
 }
 
 void CollidingWorld::removeBall(int id) {
-    balls.erase(std::remove_if(balls.begin(), balls.end(), [id](Ball const &b) { return b.id == id; }));
-    lastId = balls.empty() ? -1 : balls.back().id;
-
-    buildCells();
+    if (balls.size() != 0) {
+        balls.erase(std::remove_if(balls.begin(), balls.end(), [id](Ball const &b) { return b.id == id; }));
+        lastId = balls.size() == 0 ? -1 : balls.back().id;
+        buildCells();
+    }
 }
 
 void CollidingWorld::setSelected(Vector2 mousePos) {
@@ -152,50 +152,52 @@ void CollidingWorld::setSelected(Vector2 mousePos) {
 void CollidingWorld::unsetSelected(void) { selectedBall = -1; }
 
 void CollidingWorld::update(bool checkCollision) {
-    buildCells();
+    if (balls.size() != 0) {
+        buildCells();
 
-    std::unordered_set<int> updated = {};
+        std::unordered_set<int> updated = {};
 
-    for (auto &[pos, cell] : this->cells) {
-        for (auto &x : cell) {
-            if (x->id == selectedBall) {
-                x->pos = GetMousePosition();
-            } else if (shouldUpdate && updated.find(x->id) == updated.end()) {
-                // update only if ball hasnt been updated in another cell before
-                x->update();
+        for (auto &[pos, cell] : this->cells) {
+            for (auto &x : cell) {
+                if (x->id == selectedBall) {
+                    x->pos = GetMousePosition();
+                } else if (shouldUpdate && updated.find(x->id) == updated.end()) {
+                    // update only if ball hasnt been updated in another cell before
+                    x->update();
 
-                Vec2<bool> outbound = {x->pos.x >= worldConstraint.x - x->radius,
-                                       x->pos.y >= worldConstraint.y - x->radius};
-                Vec2<bool> inbound = {x->pos.x - x->radius < 0, x->pos.y - x->radius < 0};
+                    Vec2<bool> outbound = {x->pos.x >= worldConstraint.x - x->radius,
+                                           x->pos.y >= worldConstraint.y - x->radius};
+                    Vec2<bool> inbound = {x->pos.x - x->radius < 0, x->pos.y - x->radius < 0};
 
-                const auto xfunc = [x]() {
-                    x->vel.x = -x->vel.x;
-                    x->acc.x = -x->acc.x;
-                };
-                const auto yfunc = [x]() {
-                    x->vel.y = -x->vel.y;
-                    x->acc.y = -x->acc.y;
-                };
+                    const auto xfunc = [x]() {
+                        x->vel.x = -x->vel.x;
+                        x->acc.x = -x->acc.x;
+                    };
+                    const auto yfunc = [x]() {
+                        x->vel.y = -x->vel.y;
+                        x->acc.y = -x->acc.y;
+                    };
 
-                if (outbound.x) {
-                    x->pos.x = worldConstraint.x - x->radius;
-                    xfunc();
-                } else if (inbound.x) {
-                    x->pos.x = x->radius;
-                    xfunc();
+                    if (outbound.x) {
+                        x->pos.x = worldConstraint.x - x->radius;
+                        xfunc();
+                    } else if (inbound.x) {
+                        x->pos.x = x->radius;
+                        xfunc();
+                    }
+
+                    if (outbound.y) {
+                        x->pos.y = worldConstraint.y - x->radius;
+                        yfunc();
+                    } else if (inbound.y) {
+                        x->pos.y = x->radius;
+                        yfunc();
+                    }
+                    updated.insert(x->id);
                 }
-
-                if (outbound.y) {
-                    x->pos.y = worldConstraint.y - x->radius;
-                    yfunc();
-                } else if (inbound.y) {
-                    x->pos.y = x->radius;
-                    yfunc();
-                }
-                updated.insert(x->id);
             }
+            if (checkCollision) resolveCollisions(pos);
         }
-        if (checkCollision) resolveCollisions(pos);
     }
 }
 
@@ -215,7 +217,8 @@ void CollidingWorld::draw(void) {
     for (auto &[cell, balls] : cells) {
         for (auto &x : balls) {
             x->draw();
-            // DrawText((std::to_string(cell.x) + "," + std::to_string(cell.y)).c_str(), x->pos.x, x->pos.y, 14,
+            // DrawText((std::to_string(cell.x) + "," + std::to_string(cell.y)).c_str(), x->pos.x, x->pos.y,
+            // 14,
             //          WHITE);
         }
     }
