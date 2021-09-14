@@ -116,9 +116,9 @@ void CollidingWorld::resolveCollisions(Vec2<int> pos) {
                     auto rcap = Vector2Normalize(difference);
                     auto rIntersect = r1 + r2 - Vector2Distance(difference, Vector2Zero());
                     auto f1 = Vector2Add(Vector2Scale(rcap, rIntersect * 0.5), p1);
-                    auto f2 = Vector2Add(Vector2Scale(Vector2Negate(rcap), rIntersect * 0.5), p2);
+                    // auto f2 = Vector2Add(Vector2Scale(Vector2Negate(rcap), rIntersect * 0.5), p2);
                     x->pos = f1;
-                    y->pos = f2;
+                    // y->pos = f2;
                 }
             }
         }
@@ -215,8 +215,8 @@ void CollidingWorld::draw(void) {
     for (auto &[cell, balls] : cells) {
         for (auto &x : balls) {
             x->draw();
-            DrawText((std::to_string(cell.x) + "," + std::to_string(cell.y)).c_str(), x->pos.x, x->pos.y, 14,
-                     WHITE);
+            // DrawText((std::to_string(cell.x) + "," + std::to_string(cell.y)).c_str(), x->pos.x, x->pos.y, 14,
+            //          WHITE);
         }
     }
 }

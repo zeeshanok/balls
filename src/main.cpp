@@ -8,8 +8,8 @@
 int main(void) {
     srand(time(NULL));
     const int screenHeight = 900, screenWidth = 900;
-    const int balls = 2;
-    CollidingWorld world(150, Vec2<int>{screenWidth, screenHeight});
+    const int balls = 50;
+    CollidingWorld world(50, Vec2<int>{screenWidth, screenHeight});
 
     Color colors[] = {BLUE, RED, GREEN, YELLOW};
 
@@ -19,7 +19,8 @@ int main(void) {
         // auto vel = Vector2Zero();
         auto acc = Vector2Zero();
         auto color = colors[rand() % 4];
-        auto radius = 40 + (rand() % 20);
+        // auto radius = 40 + (rand() % 20);
+        auto radius = 10;
         return Ball(id, radius, radius, color, pos, vel, acc);
     };
 
