@@ -8,7 +8,7 @@
 #include "balls.hpp"
 
 CollidingWorld::CollidingWorld(int c, Vec2<int> constr)
-    : cellSize(c), selectedBall(-1), shouldUpdate(true), lastId(-1) {
+    : cellSize(c), selectedBall(-1), shouldUpdate(true), lastId(-1), shooter(nullptr) {
     worldConstraint = constr;
     auto [wx, wy] = worldConstraint;
     for (int i = 0; i < wx / cellSize; i++) {
@@ -54,7 +54,6 @@ void CollidingWorld::buildCells(void) {
     for (auto &[_, vec] : this->cells) {
         vec.clear();
     }
-    std::cout << "balls: " << balls.size() << "\n";
     if (balls.size() != 0) {
         for (size_t i = 0; i < balls.size(); i++) {
             auto hash_pos = hash(balls[i].pos);
@@ -139,19 +138,34 @@ void CollidingWorld::removeBall(int id) {
     }
 }
 
-void CollidingWorld::setSelected(Vector2 mousePos) {
+Ball *CollidingWorld::getSelected(void) {
+    if (selectedBall < (int)balls.size() && selectedBall >= 0) {
+        return &(this->balls[selectedBall]);
+    } else {
+        return nullptr;
+    }
+}
+
+void CollidingWorld::setSelected(Vector2 mousePos, BallSelectionType type) {
     if (selectedBall == -1) {
         for (auto &ball : balls) {
             if (Vector2Distance(mousePos, ball.pos) <= ball.radius) {
                 selectedBall = ball.id;
+                selectionType = type;
             }
         }
     }
 }
 
-void CollidingWorld::unsetSelected(void) { selectedBall = -1; }
+void CollidingWorld::unsetSelected(void) {
+    auto selected = getSelected();
+    if (selectionType == BallSelectionType::Shoot && selected != nullptr) shooter = selected;
+    selectedBall = -1;
+}
 
-void CollidingWorld::update(bool checkCollision) {
+BallSelectionType CollidingWorld::getSelectionType(void) const { return selectionType; }
+
+void CollidingWorld::update(Vector2 mouseCoords, bool checkCollision) {
     if (balls.size() != 0) {
         buildCells();
 
@@ -159,8 +173,13 @@ void CollidingWorld::update(bool checkCollision) {
 
         for (auto &[pos, cell] : this->cells) {
             for (auto &x : cell) {
-                if (x->id == selectedBall) {
-                    x->pos = GetMousePosition();
+                if (shooter != nullptr) {
+                    shooter->vel = Vector2Scale(Vector2Normalize(Vector2Subtract(shooter->pos, mouseCoords)),
+                                                Vector2Distance(mouseCoords, shooter->pos) * 10);
+                    shooter = nullptr;
+                }
+                if (x->id == selectedBall && selectionType == BallSelectionType::Drag) {
+                    x->pos = mouseCoords;
                 } else if (shouldUpdate && updated.find(x->id) == updated.end()) {
                     // update only if ball hasnt been updated in another cell before
                     x->update();
@@ -201,7 +220,7 @@ void CollidingWorld::update(bool checkCollision) {
     }
 }
 
-void CollidingWorld::update(void) { update(false); }
+void CollidingWorld::update(Vector2 m) { update(m, false); }
 
 void CollidingWorld::toggleUpdate(void) { this->shouldUpdate = !this->shouldUpdate; }
 

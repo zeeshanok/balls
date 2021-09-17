@@ -77,16 +77,23 @@ class Ball {
     bool isCollidingWith(Ball& other) const;
 };
 
+enum BallSelectionType {
+    Drag,
+    Shoot
+};
+
 // World class that checks for collisions using spatial hashing
 class CollidingWorld {
    private:
     std::unordered_map<Vec2<int>, std::vector<Ball*>> cells;
     std::vector<Ball> balls;
     int selectedBall;
+    BallSelectionType selectionType;
     int cellSize;
     Vec2<int> worldConstraint;
     bool shouldUpdate;
     int lastId;
+    Ball* shooter;
 
     Vec2<int> hash(Vector2 position) const;
 
@@ -102,11 +109,13 @@ class CollidingWorld {
     bool isValidCell(Vec2<int> cell);
     void buildCells(void);
 
-    void setSelected(Vector2 mousePos);
+    Ball* getSelected(void);
+    void setSelected(Vector2 mousePos, BallSelectionType type);
     void unsetSelected(void);
+    BallSelectionType getSelectionType(void) const;
 
-    void update(bool checkCollision);
-    void update(void);
+    void update(Vector2 mouseCoords, bool checkCollision);
+    void update(Vector2 mouseCoords);
     void toggleUpdate(void);
     bool isUpdating(void) const;
 

@@ -8,19 +8,19 @@
 int main(void) {
     srand(time(NULL));
     const int screenHeight = 900, screenWidth = 900;
-    const int balls = 50;
+    const int balls =10;
     CollidingWorld world(50, Vec2<int>{screenWidth, screenHeight});
 
     Color colors[] = {BLUE, RED, GREEN, YELLOW};
 
     const auto randBall = [colors](int id) {
         Vector2 pos = {rand() % screenWidth, rand() % screenHeight};
-        Vector2 vel = {10 + (rand() % 40), 10 + (rand() % 40)};
-        // auto vel = Vector2Zero();
+        // Vector2 vel = {10 + (rand() % 40), 10 + (rand() % 40)};
+        auto vel = Vector2Zero();
         auto acc = Vector2Zero();
         auto color = colors[rand() % 4];
         // auto radius = 40 + (rand() % 20);
-        auto radius = 10;
+        auto radius = 30;
         return Ball(id, radius, radius, color, pos, vel, acc);
     };
 
@@ -33,10 +33,14 @@ int main(void) {
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
+        bool rPressed = IsMouseButtonDown(MOUSE_RIGHT_BUTTON);
         if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-            world.setSelected(GetMousePosition());
+            world.setSelected(GetMousePosition(), BallSelectionType::Drag);
         }
-        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
+            world.setSelected(GetMousePosition(), BallSelectionType::Shoot);
+        }
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON) || IsMouseButtonReleased(MOUSE_RIGHT_BUTTON)) {
             world.unsetSelected();
         }
         if (IsKeyPressed(KEY_SPACE)) {
@@ -49,7 +53,7 @@ int main(void) {
             world.removeBall(world.getLastBallId());
         }
 
-        world.update(true);
+        world.update(GetMousePosition(), true);
 
         BeginDrawing();
 
@@ -60,6 +64,13 @@ int main(void) {
                   "\nBalls: " + std::to_string(world.getBallCount()))
                      .c_str(),
                  0, 0, 20, WHITE);
+
+        auto selected = world.getSelected();
+        auto type = world.getSelectionType();
+        if (selected != nullptr && type == BallSelectionType::Shoot) {
+            auto mouse = GetMousePosition();
+            DrawLine(mouse.x, mouse.y, selected->pos.x, selected->pos.y, WHITE);
+        }
 
         EndDrawing();
     }
